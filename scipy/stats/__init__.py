@@ -132,6 +132,7 @@ Continuous distributions
    semicircular      -- Semicircular
    t                 -- Student's T
    triang            -- Triangular
+   trapezoidal       -- Trapezoidal
    truncexpon        -- Truncated Exponential
    truncnorm         -- Truncated Normal
    tukeylambda       -- Tukey-Lambda

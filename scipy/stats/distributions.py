@@ -51,9 +51,9 @@ __all__ = [
            'gilbrat', 'maxwell', 'mielke', 'nakagami', 'ncx2', 'ncf', 't',
            'nct', 'pareto', 'lomax', 'pearson3', 'powerlaw', 'powerlognorm',
            'powernorm', 'rdist', 'rayleigh', 'reciprocal', 'rice',
-           'recipinvgauss', 'semicircular', 'triang', 'truncexpon',
-           'truncnorm', 'tukeylambda', 'uniform', 'vonmises', 'wald',
-           'wrapcauchy', 'entropy', 'rv_discrete', 'binom', 'bernoulli',
+           'recipinvgauss', 'semicircular', 'triang', 'trapezoidal',
+           'truncexpon', 'truncnorm', 'tukeylambda', 'uniform', 'vonmises', 
+           'wald', 'wrapcauchy', 'entropy', 'rv_discrete', 'binom', 'bernoulli',
            'nbinom', 'geom', 'hypergeom', 'logser', 'poisson', 'planck',
            'boltzmann', 'randint', 'zipf', 'dlaplace', 'skellam'
           ]
@@ -5670,6 +5670,169 @@ class triang_gen(rv_continuous):
     def _entropy(self,c):
         return 0.5-log(2)
 triang = triang_gen(a=0.0, b=1.0, name="triang")
+
+
+class trapezoidal_gen(rv_continuous):
+    """A trapezoidal continuous random variable.
+
+    %(before_notes)s
+
+    Notes
+    -----
+    The triangular distribution can be represented with an up-sloping line from
+    ``loc`` to ``(loc + c*scale)`` and then downsloping for ``(loc + c*scale)``
+    to ``(loc+scale)``.
+
+    The standard form is in the range [0, 1] with c the mode.
+    The location parameter shifts the start to `loc`.
+    The scale parameter changes the width from 1 to `scale`.
+
+    %(example)s
+
+    """
+    def _rvs(self, mode1, mode2, growth, decay, ratio):
+        left = self.a
+        right = self.b
+        return mtrand.trapezoidal(left, mode1, mode2, right, self._size, 
+                                 growth, decay, ratio)
+
+    def _argcheck(self, mode1, mode2, growth, decay, ratio):
+        return (mode1 >= 0) and (mode1 <= mode2) and (mode2 <=1) and \
+            (growth > 0) and (decay > 0) and (ratio > 0)
+
+    def _pdf(self, x, mode1, mode2, growth, decay, ratio):
+        left = self.a
+        right = self.b
+        # create vector or probabilities to return
+        # if none of the conditions below are satisfied, default value is 0
+        p = np.zeros_like(x)       
+        # conditional indices
+        c0 = (left <= x) & (x < mode1)
+        c1 = (mode1 <= x) & (x < mode2)
+        c2 = (mode2 <= x) & (x <= right)
+        normalizing_constant = (2*growth*decay)/((2*ratio*(mode1 - 
+            left)*decay) + ((ratio + 1)*(mode2 - mode1)*growth*decay) + 
+            (2*(right - mode2)* growth))       
+        if any(c0):
+            x_, a, b, c, d, m, n, alpha , normalizing_constant_ = x[c0], left, \
+                mode1[c0], mode2[c0], right, growth[c0], decay[c0], ratio[c0], \
+                normalizing_constant[c0]
+            p[c0] =  normalizing_constant_*alpha*(((x_ - a)/(b - a))**(m - 1))
+        if any(c1):
+            x_, a, b, c, d, m, n, alpha , normalizing_constant_ = x[c1], left, \
+                mode1[c1], mode2[c1], right, growth[c1], decay[c1], ratio[c1], \
+                normalizing_constant[c1]
+            p[c1] = normalizing_constant_*(((1 - alpha)*((x_ - b)/(c - b))) + 
+                alpha)
+        if any(c2):
+            x_, a, b, c, d, m, n, alpha , normalizing_constant_ = x[c2], left, \
+                mode1[c2], mode2[c2], right, growth[c2], decay[c2], ratio[c2], \
+                normalizing_constant[c2]
+            p[c2] =  normalizing_constant_*((d - x_)/(d - c))**(n - 1)
+        return p
+
+    def _cdf(self, x, mode1, mode2, growth, decay, ratio):
+        left = self.a
+        right = self.b
+        # create vector of probabilities to return
+        # if none of the conditions below are satisfied, 
+        # the default vale is self.badvalue
+        p = np.empty_like(x)
+        p.fill(self.badvalue)
+        # conditional indices
+        c0 = (x < left)
+        c1 = (left <= x) & (x < mode1)
+        c2 = (mode1 <= x) & (x < mode2)
+        c3 = (mode2 <= x) & (x < right)
+        c4 = (x >= right)
+        if any(c0):
+            p[c0] = 0
+        if any(c1):
+            x_, a, b, c, d, m, n, alpha = x[c1], left, mode1[c1], mode2[c1], \
+                right, growth[c1], decay[c1], ratio[c1]
+            p[c1] = (2*alpha*(b - a)*n)/((2*alpha*(b - 
+                a)*n) + ((alpha + 1)*(c - b)*m*n) + 
+                (2*(d - c)*m))*((x_ - a)/(b - a))**m                            
+        if any(c2):
+            x_, a, b, c, d, m, n, alpha = x[c2], left, mode1[c2], mode2[c2], \
+                right, growth[c2], decay[c2], ratio[c2]
+            p[c2] = ((2*alpha*(b - a)*n) + (2*(x_ - 
+                b)*m*n*(1 + ((alpha - 1)/2)*((2*c - b - 
+                x_)/(c - b)))))/((2*alpha*(b - a)*n) + 
+                ((alpha + 1)*(c - b)*m*n) + (2*(d - c)*m))
+        if any(c3):
+            x_, a, b, c, d, m, n, alpha = x[c3], left, mode1[c3], mode2[c3], \
+                right, growth[c3], decay[c3], ratio[c3] 
+            p[c3] = 1 - ((2*(d - c)*m)/((2*alpha*(b - 
+                a)*n) + ((alpha + 1)*(c - b)*m*n) + 
+                (2*(d - c)*m)))*((d - x_)/(d - c))**n
+        if any(c4):
+            p[c4] = 1   
+        return p
+
+    def _ppf(self, q, mode1, mode2, growth, decay, ratio):
+        left = self.a
+        right = self.b
+        # create vector of values to return
+        # if none of the conditions below are satisfied, the default value is 
+        # self.badvalue
+        x = np.empty_like(q)
+        x.fill(self.badvalue)
+        # calculate mixture probabilities
+        pi1 = (2*ratio*(mode1 - left)*decay) /((2*ratio*(mode1 - left)*decay) +
+            ((ratio + 1)*(mode2 - mode1)*growth*decay) + 
+            (2*(right - mode2)*growth))
+        pi2 = ((ratio + 1)*(mode2 - mode1)*growth*decay)/((2*ratio*(mode1 - 
+            left)*decay) + ((ratio + 1)*(mode2 - mode1)*growth*decay) + 
+            (2*(right - mode2)*growth))
+        pi3 = (2*(right - mode2)*growth)/((2*ratio*(mode1 - left)*decay) + 
+            ((ratio + 1)*(mode2 - mode1)*growth*decay) + 
+            (2*(right - mode2)*growth))
+        # conditional indices
+        c0 = (0 <= q) & (q <= pi1)
+        c1 = (pi1 < q) & (q <= (1 - pi3)) & (ratio != 1)
+        c2 = (pi1 < q) & (q <= (1 - pi3)) & (ratio == 1)
+        c3 = ((1 - pi3) < q) & (q <= 1)        
+        if any(c0):
+            q_, a, b, c, d, m, n, alpha = q[c0], left, mode1[c0], mode2[c0], \
+                right, growth[c0], decay[c0], ratio[c0]
+            x[c0] = ((((q_*(2*alpha*(b - a)*n + (alpha + 1)*(c - b)*m*n + 
+                2*(d - c)*m))/(2*alpha*(b - a)*n)))**(1/m))*(b - a) + a
+        if any(c1):
+            q_, a, b, c, d, m, n, alpha = q[c1], left, mode1[c1], mode2[c1], \
+                right, growth[c1], decay[c1], ratio[c1]
+            x[c1] = ((sqrt((((((-2)*b*m*n*(1 - alpha))/(2*(c - 
+                b)) + 2*m*n*(((2*c - b)*(alpha - 
+                1))/(2*(c - b)) + 1)))**2)/(((2*alpha*(b - 
+                a)*n + (alpha + 1)*(c - b)*m*n + 
+                2*(d - c)*m))**2) - (((2*alpha*(b - 
+                a)*n + (-2)*b*m*n*(((2*c - 
+                b)*(alpha - 1))/(2*(c - b)) + 1))/(2*alpha*(b - 
+                a)*n + (alpha + 1)*(c - b)*m*n + 
+                2*(d - c)*m) - q_)*4*2*m*n*(1 - 
+                alpha))/(2*(c - b)*(2*alpha*(b - a)*n +
+                (alpha + 1)*(c - b)*m*n + 2*(d - 
+                c)*m))) - (((-2)*b*m*n*(1 - 
+                alpha))/(2*(c - b)) + 2*m*n*(((2*c - 
+                b)*(alpha - 1))/(2*(c - b)) + 1))/(2*alpha*(b - 
+                a)*n + (alpha + 1)*(c - b)*m*n + 
+                2*(d - c)*m))*2*(c - b)*(2*alpha*(b - 
+                a)*n + (alpha + 1)*(c-b)*m*n + 
+                2*(d - c)*m))/(2*2*m*n*(1 - alpha))
+        if any(c2):
+            q_, a, b, c, d, m, n, alpha, pi1_, pi2_ = q[c2], left, mode1[c2], \
+                mode2[c2], right, growth[c2], decay[c2], ratio[c2], \
+                pi1[c2], pi2[c2]
+            x[c2] = b + (((q_ - pi1_) / (pi2_)) * (c - b))
+        if any(c3):
+            q_, a, b, c, d, m, n, alpha = q[c3], left, mode1[c3], mode2[c3], \
+                right, growth[c3], decay[c3], ratio[c3]    
+            x[c3] = d-(((((1 - q_)*(2*alpha*(b - a)*n + (alpha + 
+                1)*(c - b)*m*n + 2*(d - c)*m))/(2*(d - 
+                c)*m)))**(1/n))*(d - c)          
+        return x
+
+trapezoidal = trapezoidal_gen(a=0.0, b=1.0, name="trapezoidal")
 
 
 class truncexpon_gen(rv_continuous):

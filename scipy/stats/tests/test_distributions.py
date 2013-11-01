@@ -46,8 +46,8 @@ dists = ['uniform','norm','lognorm','expon','beta',
          'halflogistic','fatiguelife','foldnorm','ncx2','t','nct',
          'weibull_min','weibull_max','dweibull','maxwell','rayleigh',
          'genlogistic', 'logistic','gumbel_l','gumbel_r','gompertz',
-         'hypsecant', 'laplace', 'reciprocal','triang','tukeylambda',
-         'vonmises', 'pearson3']
+         'hypsecant', 'laplace', 'reciprocal','triang', 'trapezoidal',
+         'tukeylambda', 'vonmises', 'pearson3']
 
 # check function for test generator
 
@@ -75,6 +75,8 @@ def test_all_distributions():
         if dist == 'frechet':
             args = tuple(2*rand(1))+(0,)+tuple(2*rand(2))
         elif dist == 'triang':
+            args = tuple(rand(nargs))
+        elif dist == 'trapezoidal':
             args = tuple(rand(nargs))
         elif dist == 'reciprocal':
             vals = rand(nargs)
