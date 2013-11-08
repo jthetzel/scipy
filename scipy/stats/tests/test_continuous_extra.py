@@ -43,6 +43,47 @@ def _est_cont_skip():
               ' _ppf private test'
 
 
+@npt.dec.slow
+def compare_triang_trapezoidal():
+    # Test if triang() and trapezoidal() return same values
+    # for a triangular distribution.
+    c = 0.7
+    loc = 0.3
+    scale = 2.9
+    triangle = stats.triang(c, loc=loc, scale=scale)
+    trapezoid = stats.trapezoidal(c, c, 2.0, 2.0, 1.0, loc=loc, scale=scale)
+    x = np.linspace(-0.1, 1.1, 1000)
+    decimal = 10
+    npt.assert_almost_equal(triangle.cdf(x), trapezoid.cdf(x),
+        decimal=decimal, 
+        err_msg='stats.triang stats.trapezoidal cdf not almost equal')
+    npt.assert_almost_equal(triangle.logcdf(x), trapezoid.logcdf(x),
+        decimal=decimal, 
+        err_msg='stats.triang stats.trapezoidal logcdf not almost equal') 
+    npt.assert_almost_equal(triangle.pdf(x), trapezoid.pdf(x),
+        decimal=decimal, 
+        err_msg='stats.triang stats.trapezoidal pdf not almost equal') 
+    npt.assert_almost_equal(triangle.logpdf(x), trapezoid.logpdf(x),
+        decimal=decimal, 
+        err_msg='stats.triang stats.trapezoidal logpdf not almost equal') 
+    npt.assert_almost_equal(triangle.ppf(x), trapezoid.ppf(x),
+        decimal=decimal, 
+        err_msg='stats.triang stats.trapezoidal ppf not almost equal')  
+    npt.assert_almost_equal(triangle.cdf(x), trapezoid.cdf(x),
+        decimal=decimal, 
+        err_msg='stats.triang stats.trapezoidal cdf not almost equal') 
+    npt.assert_almost_equal(triangle.sf(x), trapezoid.sf(x),
+        decimal=decimal, 
+        err_msg='stats.triang stats.trapezoidal sf not almost equal') 
+    npt.assert_almost_equal(triangle.logsf(x), trapezoid.logsf(x),
+        decimal=decimal, 
+        err_msg='stats.triang stats.trapezoidal logsf not almost equal')
+    npt.assert_almost_equal(triangle.isf(x), trapezoid.isf(x),
+        decimal=decimal, 
+        err_msg='stats.triang stats.trapezoidal isf not almost equal')  
+    
+
+
 def test_540_567():
     # test for nan returned in tickets 540, 567
     npt.assert_almost_equal(stats.norm.cdf(-1.7624320982),0.03899815971089126,

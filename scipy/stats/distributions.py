@@ -5673,18 +5673,24 @@ triang = triang_gen(a=0.0, b=1.0, name="triang")
 
 
 class trapezoidal_gen(rv_continuous):
-    """A trapezoidal continuous random variable.
+    """A generalized trapezoidal continuous random variable.
 
     %(before_notes)s
 
     Notes
-    -----
-    The triangular distribution can be represented with an up-sloping line from
-    ``loc`` to ``(loc + c*scale)`` and then downsloping for ``(loc + c*scale)``
-    to ``(loc+scale)``.
+    -----    
+    The generalized trapezoidal distribution is represented by lower mode
+    (``mode1``), upper mode (``mode2``), ``growth``, ``decay``, and 
+    ``ratio`` parameters. When ``growth == decay == 2`` and ``ratio == 1``, 
+    the distribution simplifies to a quadrilateral trapezoid. Other positive 
+    values for ``growth`` and ``ratio`` result in trapezoid-like distributions 
+    with non-linear legs. Other positive values for ``ratio`` result in
+    trapezoid-like distributions with a non-parallel top. The trapezoidal
+    distribution simplifies to the triangular distribution when 
+    ``mode1 == mode2``.
 
-    The standard form is in the range [0, 1] with c the mode.
-    The location parameter shifts the start to `loc`.
+    With default ``loc`` and ``scale`` values, the distribution's range
+    is [0, 1]. The location parameter shifts the start to `loc`.
     The scale parameter changes the width from 1 to `scale`.
 
     %(example)s

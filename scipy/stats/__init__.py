@@ -336,3 +336,4 @@ __all__ = [s for s in dir() if not (s.startswith('_') or s.endswith('cython'))]
 
 from numpy.testing import Tester
 test = Tester().test
+
